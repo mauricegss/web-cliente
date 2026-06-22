@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Manager | Seus Destinos</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+    
+    <div id="sr-announcer" aria-live="polite" class="sr-only"></div>
+
+    <header>
+        <div class="container">
+            <h1>🌍 Travel Manager</h1>
+            <nav>
+                <a href="index.html" class="active">Meus Destinos</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content" class="container">
+        <section class="hero" aria-labelledby="hero-title">
+            <div style="flex: 1;">
+                <h2 id="hero-title">Planeje suas próximas aventuras</h2>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="text" id="search-dest" placeholder="Buscar destino..." aria-label="Buscar destino" style="padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(15, 23, 42, 0.5); color: white; min-width: 200px;">
+                <button id="btn-add-destination" class="btn primary" aria-label="Criar um novo destino">Novo Destino</button>
+            </div>
+        </section>
+
+        <section id="destinations-grid" class="grid">
+            <!-- JS will populate this -->
+        </section>
+    </main>
+
+    <!-- Modal for Adding/Editing Destination -->
+    <div id="modal-destination" class="modal hidden" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+        <div class="modal-content">
+            <button class="close-btn" aria-label="Fechar janela">&times;</button>
+            <h3 id="modal-title">Adicionar Destino</h3>
+            <form id="form-destination">
+                <input type="hidden" id="dest-id">
+                
+                <div class="form-group">
+                    <label for="dest-name">Nome do Destino</label>
+                    <input type="text" id="dest-name" required placeholder="Ex: Paris">
+                </div>
+
+                <div class="form-group">
+                    <label for="dest-country">País</label>
+                    <input type="text" id="dest-country" required placeholder="Ex: França">
+                </div>
+
+                <div class="form-group">
+                    <label for="dest-date">Data da Viagem</label>
+                    <input type="date" id="dest-date" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="dest-budget">Orçamento Planejado (R$)</label>
+                    <input type="number" id="dest-budget" required min="1" step="0.01" placeholder="Ex: 5000">
+                </div>
+
+                <div class="form-group">
+                    <label for="dest-image">URL da Imagem (Opcional)</label>
+                    <input type="url" id="dest-image" placeholder="https://images.unsplash.com/...">
+                </div>
+
+                <button type="submit" class="btn success" style="width: 100%; margin-top: 10px;">Salvar Destino</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
