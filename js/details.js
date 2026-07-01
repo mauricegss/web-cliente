@@ -1,13 +1,13 @@
 /**
  * details.js
- * Logic for the movie details page and review management (Entity 2).
+ * Lógica da página de detalhes do filme e gerenciamento de avaliações (Entidade 2).
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Ensure we are on the details page
+    // Garantir que estamos na página de detalhes
     if (!document.getElementById('detailsPoster')) return;
 
-    // Get Movie ID from URL
+    // Pegar o ID do Filme da URL
     const urlParams = new URLSearchParams(window.location.search);
     const movieId = urlParams.get('id');
 
@@ -24,33 +24,33 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // --- DOM Elements ---
-    // Movie Details Elements
+    // --- Elementos do DOM ---
+    // Elementos de Detalhes do Filme
     const detailsPoster = document.getElementById('detailsPoster');
     const detailsTitle = document.getElementById('detailsTitle');
     const detailsYear = document.getElementById('detailsYear');
     const detailsGenre = document.getElementById('detailsGenre');
     const detailsStatus = document.getElementById('detailsStatus');
 
-    // Actions
+    // Ações
     const editMovieBtn = document.getElementById('editMovieBtn');
     const deleteMovieBtn = document.getElementById('deleteMovieBtn');
     
-    // Edit Modal Elements
+    // Elementos do Modal de Edição
     const movieModal = document.getElementById('movieModal');
     const closeMovieModalBtn = document.getElementById('closeMovieModalBtn');
     const movieForm = document.getElementById('movieForm');
 
-    // Review Elements
+    // Elementos da Avaliação
     const reviewContainer = document.getElementById('reviewContainer');
     const reviewModal = document.getElementById('reviewModal');
     const closeReviewModalBtn = document.getElementById('closeReviewModal');
     const reviewForm = document.getElementById('reviewForm');
 
-    // --- Render Functions ---
+    // --- Funções de Renderização ---
 
     function renderMovieDetails() {
-        currentMovie = getMovieById(movieId); // Refresh data
+        currentMovie = getMovieById(movieId); // Atualizar dados
         
         detailsPoster.src = currentMovie.posterUrl;
         detailsPoster.onerror = function() { this.src = 'https://via.placeholder.com/300x450?text=Sem+Poster'; };
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const reviews = getReviewsByMovieId(movieId);
         reviewContainer.innerHTML = '';
 
-        // If the movie hasn't been watched yet, show a prompt instead of the review
+        // Se o filme ainda não foi assistido, mostrar um aviso em vez da avaliação
         if (currentMovie.status === 'plan') {
             reviewContainer.innerHTML = `
                 <div class="empty-state" role="alert" style="padding: 20px;">
@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Movie Actions ---
+    // --- Ações do Filme ---
     
     deleteMovieBtn.addEventListener('click', () => {
         if (confirm(`Tem certeza que deseja remover "${currentMovie.title}" do seu cofre? Todas as avaliações também serão excluídas.`)) {
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Edit Movie Modal
+    // Modal de Editar Filme
     editMovieBtn.addEventListener('click', () => {
         document.getElementById('movieId').value = currentMovie.id;
         document.getElementById('title').value = currentMovie.title;
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderReviews();
     });
 
-    // --- Review Actions ---
+    // --- Ações da Avaliação ---
 
     function closeReviewModal() {
         reviewModal.classList.remove('active');
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderReviews();
     });
 
-    // --- Initialize ---
+    // --- Inicialização ---
     renderMovieDetails();
     renderReviews();
 });

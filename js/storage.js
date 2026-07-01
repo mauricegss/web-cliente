@@ -1,12 +1,12 @@
 /**
  * storage.js
- * Handles LocalStorage persistence for Movies and Reviews (2 entities).
+ * Gerencia a persistência no LocalStorage para Filmes e Avaliações (2 entidades).
  */
 
 const MOVIES_KEY = 'cinevault_movies';
 const REVIEWS_KEY = 'cinevault_reviews';
 
-// --- MOVIES CRUD ---
+// --- CRUD DE FILMES ---
 
 function getMovies() {
     const movies = localStorage.getItem(MOVIES_KEY);
@@ -16,14 +16,14 @@ function getMovies() {
 function saveMovie(movie) {
     const movies = getMovies();
     if (movie.id) {
-        // Edit existing
+        // Editar existente
         const index = movies.findIndex(m => m.id === movie.id);
         if (index !== -1) {
             movies[index] = movie;
         }
     } else {
-        // Add new
-        movie.id = Date.now().toString() + '-' + Math.random().toString(36).substring(2, 9); // Generate unique ID
+        // Adicionar novo
+        movie.id = Date.now().toString() + '-' + Math.random().toString(36).substring(2, 9); // Gerar ID único
         movies.push(movie);
     }
     localStorage.setItem(MOVIES_KEY, JSON.stringify(movies));
@@ -40,14 +40,14 @@ function deleteMovie(id) {
     movies = movies.filter(m => m.id !== id);
     localStorage.setItem(MOVIES_KEY, JSON.stringify(movies));
     
-    // Also delete all associated reviews (Cascade delete)
+    // Deletar também todas as avaliações associadas (Exclusão em cascata)
     let reviews = getReviews();
     reviews = reviews.filter(r => r.movieId !== id);
     localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
 }
 
 
-// --- REVIEWS CRUD (Second Entity) ---
+// --- CRUD DE AVALIAÇÕES (Segunda Entidade) ---
 
 function getReviews() {
     const reviews = localStorage.getItem(REVIEWS_KEY);
