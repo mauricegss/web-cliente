@@ -1,182 +1,207 @@
-// js/details.js
+/**
+ * details.js
+ * Logic for the movie details page and review management (Entity 2).
+ */
 
 document.addEventListener('DOMContentLoaded', () => {
-    const params = new URLSearchParams(window.location.search);
-    const destId = params.get('id');
+    // Ensure we are on the details page
+    if (!document.getElementById('detailsPoster')) return;
 
-    if (!destId) {
+    // Get Movie ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const movieId = urlParams.get('id');
+
+    if (!movieId) {
         window.location.href = 'index.html';
         return;
     }
 
-    const dests = Storage.getDestinations();
-    const destination = dests.find(d => d.id === destId);
+    let currentMovie = getMovieById(movieId);
 
-    if (!destination) {
-        alert('Destino não encontrado!');
+    if (!currentMovie) {
+        alert("Filme não encontrado no seu cofre!");
         window.location.href = 'index.html';
         return;
     }
 
-    const infoSection = document.getElementById('destination-info');
-    const expensesList = document.getElementById('expenses-list');
-    const spentLabel = document.getElementById('spent-label');
-    const budgetLabel = document.getElementById('budget-label');
-    const progressBar = document.getElementById('progress-bar');
-    const modal = document.getElementById('modal-expense');
-    const btnAdd = document.getElementById('btn-add-expense');
-    const closeBtn = document.querySelector('.close-btn');
-    const form = document.getElementById('form-expense');
-    const modalTitle = document.getElementById('expense-modal-title');
-    const srAnnouncer = document.getElementById('sr-announcer');
+    // --- DOM Elements ---
+    // Movie Details Elements
+    const detailsPoster = document.getElementById('detailsPoster');
+    const detailsTitle = document.getElementById('detailsTitle');
+    const detailsYear = document.getElementById('detailsYear');
+    const detailsGenre = document.getElementById('detailsGenre');
+    const detailsStatus = document.getElementById('detailsStatus');
 
-    function announce(message) {
-        if(srAnnouncer) {
-            srAnnouncer.textContent = message;
+    // Actions
+    const editMovieBtn = document.getElementById('editMovieBtn');
+    const deleteMovieBtn = document.getElementById('deleteMovieBtn');
+    
+    // Edit Modal Elements
+    const movieModal = document.getElementById('movieModal');
+    const closeMovieModalBtn = document.getElementById('closeMovieModalBtn');
+    const movieForm = document.getElementById('movieForm');
+
+    // Review Elements
+    const reviewContainer = document.getElementById('reviewContainer');
+    const reviewModal = document.getElementById('reviewModal');
+    const closeReviewModalBtn = document.getElementById('closeReviewModal');
+    const reviewForm = document.getElementById('reviewForm');
+
+    // --- Render Functions ---
+
+    function renderMovieDetails() {
+        currentMovie = getMovieById(movieId); // Refresh data
+        
+        detailsPoster.src = currentMovie.posterUrl;
+        detailsPoster.onerror = function() { this.src = 'https://via.placeholder.com/300x450?text=Sem+Poster'; };
+        
+        detailsTitle.textContent = currentMovie.title;
+        detailsYear.innerHTML = `<i class="fa-regular fa-calendar" aria-hidden="true"></i> ${currentMovie.year}`;
+        detailsGenre.innerHTML = `<i class="fa-solid fa-tag" aria-hidden="true"></i> ${currentMovie.genre}`;
+        
+        const badgeClass = currentMovie.status === 'watched' ? 'badge-watched' : 'badge-plan';
+        const statusText = currentMovie.status === 'watched' ? 'Assistido' : 'Quero Assistir';
+        detailsStatus.className = `badge ${badgeClass}`;
+        detailsStatus.textContent = statusText;
+    }
+
+    function renderReviews() {
+        const reviews = getReviewsByMovieId(movieId);
+        reviewContainer.innerHTML = '';
+
+        if (reviews.length === 0) {
+            reviewContainer.innerHTML = `
+                <div class="empty-state" role="alert" style="padding: 20px;">
+                    <i class="fa-regular fa-comment-dots" aria-hidden="true" style="font-size: 2.5rem;"></i>
+                    <h3 style="font-size: 1.2rem; margin-top: 10px;">Sua avaliação está vazia</h3>
+                    <p style="font-size: 0.95rem; margin-bottom: 20px;">O que você achou deste filme?</p>
+                    <div style="display: flex; justify-content: center; width: 100%;">
+                        <button class="btn btn-primary" id="addReviewBtn" style="width: auto; padding: 8px 16px;">
+                            <i class="fa-solid fa-plus" aria-hidden="true"></i> Escrever Avaliação
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('addReviewBtn').addEventListener('click', () => {
+                reviewForm.reset();
+                document.getElementById('reviewId').value = '';
+                reviewModal.classList.add('active');
+            });
+            return;
         }
-    }
 
-    function renderInfo() {
-        infoSection.innerHTML = `
-            <div class="hero-card-info">
-                <h2>${destination.name} - ${destination.country}</h2>
-                <p>📅 ${formatDate(destination.date)}</p>
+        // 1-to-1: Só importa a primeira (e única) avaliação do usuário
+        const review = reviews[0];
+        const date = new Date(review.timestamp).toLocaleDateString();
+        
+        let starsHtml = '';
+        for(let i = 1; i <= 5; i++) {
+            if (i <= review.rating) {
+                starsHtml += '<i class="fa-solid fa-star star"></i>';
+            } else {
+                starsHtml += '<i class="fa-solid fa-star star-empty"></i>';
+            }
+        }
+
+        reviewContainer.innerHTML = `
+            <div class="review-card" style="margin-bottom: 0; background: rgba(255,255,255,0.02); border: none;">
+                <div class="review-content" style="flex-grow: 1;">
+                    <h4 aria-label="Nota: ${review.rating} de 5" style="font-size: 1.5rem; justify-content: center; margin-bottom: 15px;">${starsHtml}</h4>
+                    <p style="font-size: 1.1rem; font-style: italic; text-align: center;">"${review.comment.replace(/\n/g, '<br>')}"</p>
+                    <span class="review-date" style="text-align: center; margin-top: 15px; display: block;">Adicionado em: ${date}</span>
+                </div>
             </div>
-            <div>
-                <img src="${destination.image || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=400&q=80'}" alt="${destination.name}" style="width: 200px; height: 120px; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+            <div class="action-buttons" style="margin-top: 25px;">
+                <button class="btn btn-secondary" id="editReviewBtn" aria-label="Editar avaliação">
+                    <i class="fa-solid fa-pen" aria-hidden="true"></i> Editar
+                </button>
+                <button class="btn btn-danger" onclick="deleteReviewHandler('${review.id}')" aria-label="Excluir avaliação">
+                    <i class="fa-solid fa-trash" aria-hidden="true"></i> Excluir
+                </button>
             </div>
         `;
-        budgetLabel.textContent = `Orçamento: ${formatCurrency(destination.budget)}`;
+
+        document.getElementById('editReviewBtn').addEventListener('click', () => {
+            document.getElementById('reviewId').value = review.id;
+            document.getElementById('rating').value = review.rating;
+            document.getElementById('comment').value = review.comment;
+            reviewModal.classList.add('active');
+        });
     }
 
-    function renderExpenses() {
-        const allExps = Storage.getExpenses();
-        const destExps = allExps.filter(e => e.destinationId === destId);
-
-        let totalSpent = 0;
-        expensesList.innerHTML = '';
-
-        if (destExps.length === 0) {
-            expensesList.innerHTML = '<li class="empty-state">Nenhuma despesa registrada.</li>';
-        } else {
-            destExps.forEach(exp => {
-                totalSpent += exp.amount;
-                const li = document.createElement('li');
-                li.className = 'list-item';
-                li.innerHTML = `
-                    <div class="list-item-info">
-                        <strong>${exp.description} <span class="sr-only">Categoria:</span><span>${exp.category}</span></strong>
-                        <div style="margin-top: 4px; font-weight: 600; color: var(--danger);" aria-label="Valor: ${formatCurrency(exp.amount)}">${formatCurrency(exp.amount)}</div>
-                    </div>
-                    <div>
-                        <button class="btn small btn-edit-exp" data-id="${exp.id}" aria-label="Editar despesa ${exp.description}">Editar</button>
-                        <button class="btn danger small btn-delete-exp" data-id="${exp.id}" aria-label="Excluir despesa ${exp.description}">Excluir</button>
-                    </div>
-                `;
-                expensesList.appendChild(li);
-            });
+    window.deleteReviewHandler = (id) => {
+        if (confirm("Tem certeza que deseja excluir esta avaliação?")) {
+            deleteReview(id);
+            renderReviews();
         }
+    };
 
-        spentLabel.textContent = `Gasto: ${formatCurrency(totalSpent)}`;
+    // --- Movie Actions ---
+    
+    deleteMovieBtn.addEventListener('click', () => {
+        if (confirm(`Tem certeza que deseja remover "${currentMovie.title}" do seu cofre? Todas as avaliações também serão excluídas.`)) {
+            deleteMovie(movieId);
+            window.location.href = 'index.html';
+        }
+    });
 
-        let progress = (totalSpent / destination.budget) * 100;
-        if (progress > 100) progress = 100;
+    // Edit Movie Modal
+    editMovieBtn.addEventListener('click', () => {
+        document.getElementById('movieId').value = currentMovie.id;
+        document.getElementById('title').value = currentMovie.title;
+        document.getElementById('genre').value = currentMovie.genre;
+        document.getElementById('year').value = currentMovie.year;
+        document.getElementById('posterUrl').value = currentMovie.posterUrl;
+        document.getElementById('status').value = currentMovie.status;
         
-        progressBar.style.width = `${progress}%`;
-        if (progress >= 90) {
-            progressBar.classList.add('danger-bg');
-        } else {
-            progressBar.classList.remove('danger-bg');
-        }
+        movieModal.classList.add('active');
+    });
 
-        attachEventListeners();
+    function closeMovieModal() {
+        movieModal.classList.remove('active');
     }
 
-    function attachEventListeners() {
-        document.querySelectorAll('.btn-edit-exp').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.target.getAttribute('data-id');
-                openModal(id);
-            });
-        });
+    closeMovieModalBtn.addEventListener('click', closeMovieModal);
+    movieModal.addEventListener('click', (e) => { if (e.target === movieModal) closeMovieModal(); });
 
-        document.querySelectorAll('.btn-delete-exp').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.target.getAttribute('data-id');
-                if (confirm('Tem certeza que deseja excluir esta despesa?')) {
-                    deleteExpense(id);
-                }
-            });
-        });
-    }
-
-    function openModal(id = null) {
-        modal.classList.remove('hidden');
-        if (id) {
-            modalTitle.textContent = 'Editar Despesa';
-            const exps = Storage.getExpenses();
-            const exp = exps.find(e => e.id === id);
-            if (exp) {
-                document.getElementById('exp-id').value = exp.id;
-                document.getElementById('exp-desc').value = exp.description;
-                document.getElementById('exp-amount').value = exp.amount;
-                document.getElementById('exp-category').value = exp.category;
-            }
-        } else {
-            modalTitle.textContent = 'Adicionar Despesa';
-            form.reset();
-            document.getElementById('exp-id').value = '';
-        }
-    }
-
-    function closeModal() {
-        modal.classList.add('hidden');
-        form.reset();
-    }
-
-    function deleteExpense(id) {
-        let exps = Storage.getExpenses();
-        exps = exps.filter(e => e.id !== id);
-        Storage.saveExpenses(exps);
-        renderExpenses();
-        announce('Despesa excluída com sucesso.');
-    }
-
-    form.addEventListener('submit', (e) => {
+    movieForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        
-        const id = document.getElementById('exp-id').value;
-        const newExp = {
-            id: id || generateId(),
-            destinationId: destId,
-            description: document.getElementById('exp-desc').value,
-            amount: parseFloat(document.getElementById('exp-amount').value),
-            category: document.getElementById('exp-category').value
+        const updatedMovie = {
+            id: document.getElementById('movieId').value,
+            title: document.getElementById('title').value,
+            genre: document.getElementById('genre').value,
+            year: document.getElementById('year').value,
+            posterUrl: document.getElementById('posterUrl').value,
+            status: document.getElementById('status').value,
         };
-
-        let exps = Storage.getExpenses();
-        if (id) {
-            const index = exps.findIndex(e => e.id === id);
-            if (index > -1) exps[index] = newExp;
-        } else {
-            exps.push(newExp);
-        }
-
-        Storage.saveExpenses(exps);
-        closeModal();
-        renderExpenses();
-        announce(id ? 'Despesa atualizada com sucesso.' : 'Nova despesa criada com sucesso.');
+        saveMovie(updatedMovie);
+        closeMovieModal();
+        renderMovieDetails();
     });
 
-    btnAdd.addEventListener('click', () => {
-        openModal();
-        setTimeout(() => document.getElementById('exp-desc').focus(), 100);
-    });
-    closeBtn.addEventListener('click', closeModal);
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
+    // --- Review Actions ---
+
+    function closeReviewModal() {
+        reviewModal.classList.remove('active');
+    }
+
+    closeReviewModalBtn.addEventListener('click', closeReviewModal);
+    reviewModal.addEventListener('click', (e) => { if (e.target === reviewModal) closeReviewModal(); });
+
+    reviewForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const review = {
+            movieId: movieId,
+            rating: parseInt(document.getElementById('rating').value),
+            comment: document.getElementById('comment').value
+        };
+        saveReview(review);
+        closeReviewModal();
+        renderReviews();
     });
 
-    renderInfo();
-    renderExpenses();
+    // --- Initialize ---
+    renderMovieDetails();
+    renderReviews();
 });

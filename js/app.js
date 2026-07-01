@@ -1,177 +1,175 @@
-// js/app.js
+/**
+ * app.js
+ * Logic for the main page (index.html).
+ */
 
 document.addEventListener('DOMContentLoaded', () => {
-    const grid = document.getElementById('destinations-grid');
-    const modal = document.getElementById('modal-destination');
-    const btnAdd = document.getElementById('btn-add-destination');
-    const closeBtn = document.querySelector('.close-btn');
-    const form = document.getElementById('form-destination');
-    const modalTitle = document.getElementById('modal-title');
-    const srAnnouncer = document.getElementById('sr-announcer');
-    const searchInput = document.getElementById('search-dest');
+    // Check if we are on index.html
+    if (!document.getElementById('movieGrid')) return;
 
-    let currentFilter = '';
+    // --- DOM Elements ---
+    const movieGrid = document.getElementById('movieGrid');
+    const searchInput = document.getElementById('searchInput');
+    const filterContainer = document.getElementById('filterContainer');
+    
+    // Modal Elements
+    const addMovieBtn = document.getElementById('addMovieBtn');
+    const movieModal = document.getElementById('movieModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const movieForm = document.getElementById('movieForm');
 
-    function announce(message) {
-        if(srAnnouncer) {
-            srAnnouncer.textContent = message;
-        }
-    }
+    // --- State ---
+    let currentFilter = 'all';
+    let searchQuery = '';
 
-    function renderDestinations() {
-        let dests = Storage.getDestinations();
+    // --- Render Functions ---
+    function renderMovies() {
+        const movies = getMovies();
         
-        if (currentFilter) {
-            dests = dests.filter(d => 
-                d.name.toLowerCase().includes(currentFilter.toLowerCase()) || 
-                d.country.toLowerCase().includes(currentFilter.toLowerCase())
-            );
-        }
+        // Apply filters and search
+        const filtered = movies.filter(movie => {
+            const matchesFilter = currentFilter === 'all' || movie.status === currentFilter;
+            const matchesSearch = movie.title.toLowerCase().includes(searchQuery) || 
+                                  movie.genre.toLowerCase().includes(searchQuery);
+            return matchesFilter && matchesSearch;
+        });
 
-        grid.innerHTML = '';
+        movieGrid.innerHTML = '';
 
-        if (dests.length === 0) {
-            if (currentFilter) {
-                grid.innerHTML = '<div class="empty-state card" style="grid-column: 1 / -1;"><h3>Nenhum resultado</h3><p>Não encontramos destinos correspondentes à sua busca.</p></div>';
-            } else {
-                grid.innerHTML = '<div class="empty-state card" style="grid-column: 1 / -1;"><h3>Nenhum destino ainda</h3><p>Clique em "Novo Destino" para começar a planejar!</p></div>';
-            }
+        if (filtered.length === 0) {
+            movieGrid.innerHTML = `
+                <div class="empty-state" role="alert">
+                    <i class="fa-solid fa-film" aria-hidden="true"></i>
+                    <h3>Nenhum filme encontrado</h3>
+                    <p>Tente ajustar sua busca ou adicione um novo filme ao seu cofre.</p>
+                </div>
+            `;
             return;
         }
 
-        dests.forEach(dest => {
-            const card = document.createElement('div');
-            card.className = 'card';
+        filtered.forEach(movie => {
+            const badgeClass = movie.status === 'watched' ? 'badge-watched' : 'badge-plan';
+            const statusText = movie.status === 'watched' ? 'Assistido' : 'Quero Assistir';
             
-            const imgUrl = dest.image || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
+            // Fallback for broken images
+            const imgHtml = `<img src="${movie.posterUrl}" alt="Pôster de ${movie.title}" class="movie-poster" onerror="this.src='https://via.placeholder.com/300x450?text=Sem+Poster'">`;
 
+            const card = document.createElement('div');
+            card.className = 'movie-card';
+            card.onclick = () => {
+                window.location.href = `details.html?id=${movie.id}`;
+            };
+            
             card.innerHTML = `
-                <div class="card-img" style="background-image: url('${imgUrl}')" role="img" aria-label="Imagem de ${dest.name}"></div>
-                <div class="card-content">
-                    <h3>${dest.name} - ${dest.country}</h3>
-                    <p>📅 ${formatDate(dest.date)}</p>
-                    <p>💰 Orçamento: ${formatCurrency(dest.budget)}</p>
-                    <div class="card-actions" style="margin-top: auto;">
-                        <button class="btn primary small btn-details" data-id="${dest.id}" aria-label="Abrir detalhes de ${dest.name}">Abrir</button>
-                        <button class="btn small btn-edit" data-id="${dest.id}" aria-label="Editar ${dest.name}">Editar</button>
-                        <button class="btn danger small btn-delete" data-id="${dest.id}" aria-label="Excluir ${dest.name}">Excluir</button>
+                ${imgHtml}
+                <div class="movie-overlay">
+                    <h3 class="movie-title">${movie.title}</h3>
+                    <div class="movie-info-row">
+                        <span>${movie.year} &bull; ${movie.genre}</span>
+                        <span class="badge ${badgeClass}">${statusText}</span>
                     </div>
                 </div>
             `;
-            grid.appendChild(card);
-        });
-
-        attachEventListeners();
-    }
-
-    function attachEventListeners() {
-        document.querySelectorAll('.btn-details').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.target.getAttribute('data-id');
-                window.location.href = `details.html?id=${id}`;
-            });
-        });
-
-        document.querySelectorAll('.btn-edit').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.target.getAttribute('data-id');
-                openModal(id);
-            });
-        });
-
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.target.getAttribute('data-id');
-                if (confirm('Tem certeza que deseja excluir este destino?')) {
-                    deleteDestination(id);
-                }
-            });
+            movieGrid.appendChild(card);
         });
     }
 
-    function openModal(id = null) {
-        modal.classList.remove('hidden');
-        if (id) {
-            modalTitle.textContent = 'Editar Destino';
-            const dests = Storage.getDestinations();
-            const dest = dests.find(d => d.id === id);
-            if (dest) {
-                document.getElementById('dest-id').value = dest.id;
-                document.getElementById('dest-name').value = dest.name;
-                document.getElementById('dest-country').value = dest.country;
-                document.getElementById('dest-date').value = dest.date;
-                document.getElementById('dest-budget').value = dest.budget;
-                document.getElementById('dest-image').value = dest.image || '';
-            }
-        } else {
-            modalTitle.textContent = 'Adicionar Destino';
-            form.reset();
-            document.getElementById('dest-id').value = '';
+    // --- Event Listeners ---
+    
+    // Search
+    searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value.toLowerCase();
+        renderMovies();
+    });
+
+    // Filters
+    filterContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('filter-btn')) {
+            // Update active class
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            
+            currentFilter = e.target.getAttribute('data-filter');
+            renderMovies();
         }
+    });
+
+    // Carousel Logic
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const carouselWrapper = document.querySelector('.carousel-wrapper');
+
+    function updateCarouselButtons() {
+        if (prevBtn && nextBtn) {
+            // Check if there are enough items to actually overflow the flex container
+            if (movieGrid.scrollWidth > movieGrid.clientWidth) {
+                prevBtn.style.display = 'flex';
+                nextBtn.style.display = 'flex';
+                carouselWrapper.style.justifyContent = 'flex-start';
+            } else {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+                carouselWrapper.style.justifyContent = 'center'; // Center the items if they don't overflow
+            }
+        }
+    }
+
+    if (prevBtn && nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            if (movieGrid.scrollWidth > movieGrid.clientWidth) {
+                const firstChild = movieGrid.firstElementChild;
+                movieGrid.appendChild(firstChild);
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (movieGrid.scrollWidth > movieGrid.clientWidth) {
+                const lastChild = movieGrid.lastElementChild;
+                movieGrid.insertBefore(lastChild, movieGrid.firstElementChild);
+            }
+        });
+        
+        window.addEventListener('resize', updateCarouselButtons);
+    }
+
+    // Modal Logic
+    function openModal() {
+        movieForm.reset();
+        document.getElementById('movieId').value = ''; // Ensure it's a new entry
+        movieModal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
     }
 
     function closeModal() {
-        modal.classList.add('hidden');
-        form.reset();
+        movieModal.classList.remove('active');
+        document.body.style.overflow = 'auto';
     }
 
-    function deleteDestination(id) {
-        let dests = Storage.getDestinations();
-        dests = dests.filter(d => d.id !== id);
-        Storage.saveDestinations(dests);
-        
-        // Also delete related expenses
-        let exps = Storage.getExpenses();
-        exps = exps.filter(e => e.destinationId !== id);
-        Storage.saveExpenses(exps);
+    addMovieBtn.addEventListener('click', openModal);
+    closeModalBtn.addEventListener('click', closeModal);
+    movieModal.addEventListener('click', (e) => {
+        if (e.target === movieModal) closeModal();
+    });
 
-        renderDestinations();
-        announce('Destino excluído com sucesso.');
-    }
-
-    form.addEventListener('submit', (e) => {
+    // Form Submission
+    movieForm.addEventListener('submit', (e) => {
         e.preventDefault();
         
-        const id = document.getElementById('dest-id').value;
-        const newDest = {
-            id: id || generateId(),
-            name: document.getElementById('dest-name').value,
-            country: document.getElementById('dest-country').value,
-            date: document.getElementById('dest-date').value,
-            budget: parseFloat(document.getElementById('dest-budget').value),
-            image: document.getElementById('dest-image').value
+        const movie = {
+            id: document.getElementById('movieId').value || undefined,
+            title: document.getElementById('title').value,
+            genre: document.getElementById('genre').value,
+            year: document.getElementById('year').value,
+            posterUrl: document.getElementById('posterUrl').value,
+            status: document.getElementById('status').value,
         };
 
-        let dests = Storage.getDestinations();
-        if (id) {
-            const index = dests.findIndex(d => d.id === id);
-            if (index > -1) dests[index] = newDest;
-        } else {
-            dests.push(newDest);
-        }
-
-        Storage.saveDestinations(dests);
+        saveMovie(movie);
         closeModal();
-        renderDestinations();
-        announce(id ? 'Destino atualizado com sucesso.' : 'Novo destino criado com sucesso.');
+        renderMovies();
     });
 
-    btnAdd.addEventListener('click', () => {
-        openModal();
-        setTimeout(() => document.getElementById('dest-name').focus(), 100);
-    });
-    
-    if(searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            currentFilter = e.target.value;
-            renderDestinations();
-        });
-    }
-
-    closeBtn.addEventListener('click', closeModal);
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
-
-    renderDestinations();
+    // Initial Render
+    renderMovies();
+    updateCarouselButtons(); // check buttons on load
 });

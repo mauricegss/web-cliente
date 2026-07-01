@@ -3,84 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Manager | Detalhes do Destino</title>
+    <title>CineVault | Detalhes do Filme</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
-    
-    <div id="sr-announcer" aria-live="polite" class="sr-only"></div>
-
     <header>
-        <div class="container">
-            <h1>🌍 Travel Manager</h1>
-            <nav>
-                <a href="index.html">Meus Destinos</a>
-            </nav>
+        <div class="container navbar">
+            <a href="index.html" class="logo" aria-label="Início do CineVault">
+                <i class="fa-solid fa-film text-gradient" aria-hidden="true"></i>
+                CineVault
+            </a>
+            <a href="index.html" class="btn btn-secondary" aria-label="Voltar para a página principal">
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Voltar ao Cofre
+            </a>
         </div>
     </header>
 
-    <main id="main-content" class="container">
-        <nav class="back-link" aria-label="Navegação secundária">
-            <a href="index.html">&larr; Voltar para Destinos</a>
-        </nav>
-
-        <section id="destination-info" class="card hero-card" aria-label="Informações do Destino">
-            <!-- JS will populate -->
-        </section>
-
-        <section class="expenses-section" aria-labelledby="expenses-title">
-            <div class="expenses-header">
-                <h2 id="expenses-title">Despesas da Viagem</h2>
-                <button id="btn-add-expense" class="btn primary" aria-label="Adicionar nova despesa">Nova Despesa</button>
+    <main class="details-page-container">
+        <section class="container split-layout" aria-label="Detalhes do Filme e Avaliação">
+            
+            <!-- Left Side: Movie Info -->
+            <div class="movie-panel">
+                <img src="" alt="Pôster do Filme" class="details-poster" id="detailsPoster">
+                <div class="movie-panel-info">
+                    <h1 class="details-title" id="detailsTitle">Carregando...</h1>
+                    <div class="details-meta" aria-label="Metadados do filme">
+                        <span id="detailsYear"><i class="fa-regular fa-calendar" aria-hidden="true"></i> ----</span>
+                        <span id="detailsGenre"><i class="fa-solid fa-tag" aria-hidden="true"></i> ---</span>
+                        <span id="detailsStatus" class="badge">---</span>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" id="editMovieBtn" aria-label="Editar informações do filme">
+                            <i class="fa-solid fa-pen" aria-hidden="true"></i> Editar Filme
+                        </button>
+                        <button class="btn btn-danger" id="deleteMovieBtn" aria-label="Excluir filme do cofre">
+                            <i class="fa-solid fa-trash" aria-hidden="true"></i> Excluir
+                        </button>
+                    </div>
+                </div>
             </div>
             
-            <div class="budget-progress" role="region" aria-label="Progresso do orçamento">
-                <div class="progress-labels">
-                    <span id="spent-label">Gasto: R$ 0,00</span>
-                    <span id="budget-label">Orçamento: R$ 0,00</span>
+            <!-- Right Side: The Single Personal Review -->
+            <div class="review-panel" aria-label="Sua avaliação pessoal">
+                <div class="reviews-header">
+                    <h2><i class="fa-solid fa-star text-gradient" aria-hidden="true"></i> Minha Avaliação</h2>
                 </div>
-                <div class="progress-bar-container" aria-hidden="true">
-                    <div id="progress-bar" class="progress-bar"></div>
+                <div id="reviewContainer">
+                    <!-- The single review or empty state will be loaded here -->
                 </div>
             </div>
-
-            <ul id="expenses-list" class="list" aria-live="polite">
-                <!-- JS will populate -->
-            </ul>
+            
         </section>
     </main>
 
-    <!-- Modal for Adding/Editing Expense -->
-    <div id="modal-expense" class="modal hidden" role="dialog" aria-labelledby="expense-modal-title" aria-modal="true">
+    <!-- Review Modal -->
+    <div class="modal-overlay" id="reviewModal" role="dialog" aria-labelledby="review-modal-title" aria-modal="true">
         <div class="modal-content">
-            <button class="close-btn" aria-label="Fechar janela">&times;</button>
-            <h3 id="expense-modal-title">Adicionar Despesa</h3>
-            <form id="form-expense">
-                <input type="hidden" id="exp-id">
+            <div class="modal-header">
+                <h2 class="modal-title" id="review-modal-title">Escrever uma Avaliação</h2>
+                <button class="close-btn" id="closeReviewModal" aria-label="Fechar janela de avaliação"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+            <form id="reviewForm">
+                <input type="hidden" id="reviewId">
                 
-                <div class="form-group">
-                    <label for="exp-desc">Descrição</label>
-                    <input type="text" id="exp-desc" required placeholder="Ex: Jantar restaurante">
-                </div>
-
-                <div class="form-group">
-                    <label for="exp-amount">Valor (R$)</label>
-                    <input type="number" id="exp-amount" required min="0.01" step="0.01">
-                </div>
-
-                <div class="form-group">
-                    <label for="exp-category">Categoria</label>
-                    <select id="exp-category" required>
-                        <option value="Alimentação">Alimentação</option>
-                        <option value="Hospedagem">Hospedagem</option>
-                        <option value="Transporte">Transporte</option>
-                        <option value="Passeios">Passeios</option>
-                        <option value="Outros">Outros</option>
+                <div class="input-group">
+                    <label for="rating">Nota (1 a 5 Estrelas)</label>
+                    <select id="rating" required aria-required="true">
+                        <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+                        <option value="4">⭐⭐⭐⭐ (4/5)</option>
+                        <option value="3">⭐⭐⭐ (3/5)</option>
+                        <option value="2">⭐⭐ (2/5)</option>
+                        <option value="1">⭐ (1/5)</option>
                     </select>
                 </div>
-
-                <button type="submit" class="btn success" style="width: 100%; margin-top: 10px;">Salvar Despesa</button>
+                
+                <div class="input-group">
+                    <label for="comment">Seus comentários</label>
+                    <textarea id="comment" required rows="4" placeholder="O que você achou deste filme?" aria-required="true"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                    <i class="fa-solid fa-save" aria-hidden="true"></i> Salvar Avaliação
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Movie Modal -->
+    <div class="modal-overlay" id="movieModal" role="dialog" aria-labelledby="edit-modal-title" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="edit-modal-title">Editar Filme</h2>
+                <button class="close-btn" id="closeMovieModalBtn" aria-label="Fechar edição de filme"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+            <form id="movieForm">
+                <input type="hidden" id="movieId">
+                
+                <div class="input-group">
+                    <label for="title">Título</label>
+                    <input type="text" id="title" required aria-required="true">
+                </div>
+                
+                <div class="input-group">
+                    <label for="genre">Gênero</label>
+                    <input type="text" id="genre" required aria-required="true">
+                </div>
+                
+                <div class="input-group">
+                    <label for="year">Ano de Lançamento</label>
+                    <input type="number" id="year" required min="1800" max="2100" aria-required="true">
+                </div>
+                
+                <div class="input-group">
+                    <label for="posterUrl">URL do Pôster (Imagem)</label>
+                    <input type="url" id="posterUrl" required aria-required="true">
+                </div>
+                
+                <div class="input-group">
+                    <label for="status">Status</label>
+                    <select id="status" required aria-required="true">
+                        <option value="plan">Quero Assistir</option>
+                        <option value="watched">Assistido</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                    <i class="fa-solid fa-save" aria-hidden="true"></i> Salvar Alterações
+                </button>
             </form>
         </div>
     </div>

@@ -1,28 +1,84 @@
-const Storage = {
-    getDestinations() {
-        return JSON.parse(localStorage.getItem('destinations') || '[]');
-    },
-    saveDestinations(destinations) {
-        localStorage.setItem('destinations', JSON.stringify(destinations));
-    },
-    getExpenses() {
-        return JSON.parse(localStorage.getItem('expenses') || '[]');
-    },
-    saveExpenses(expenses) {
-        localStorage.setItem('expenses', JSON.stringify(expenses));
+/**
+ * storage.js
+ * Handles LocalStorage persistence for Movies and Reviews (2 entities).
+ */
+
+const MOVIES_KEY = 'cinevault_movies';
+const REVIEWS_KEY = 'cinevault_reviews';
+
+// --- MOVIES CRUD ---
+
+function getMovies() {
+    const movies = localStorage.getItem(MOVIES_KEY);
+    return movies ? JSON.parse(movies) : [];
+}
+
+function saveMovie(movie) {
+    const movies = getMovies();
+    if (movie.id) {
+        // Edit existing
+        const index = movies.findIndex(m => m.id === movie.id);
+        if (index !== -1) {
+            movies[index] = movie;
+        }
+    } else {
+        // Add new
+        movie.id = Date.now().toString() + '-' + Math.random().toString(36).substring(2, 9); // Generate unique ID
+        movies.push(movie);
     }
-};
-
-function formatCurrency(value) {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    localStorage.setItem(MOVIES_KEY, JSON.stringify(movies));
+    return movie;
 }
 
-function formatDate(dateString) {
-    if(!dateString) return '';
-    const date = new Date(dateString + 'T12:00:00'); // to avoid timezone shifting
-    return new Intl.DateTimeFormat('pt-BR').format(date);
+function getMovieById(id) {
+    const movies = getMovies();
+    return movies.find(m => m.id === id);
 }
 
-function generateId() {
-    return Math.random().toString(36).substr(2, 9);
+function deleteMovie(id) {
+    let movies = getMovies();
+    movies = movies.filter(m => m.id !== id);
+    localStorage.setItem(MOVIES_KEY, JSON.stringify(movies));
+    
+    // Also delete all associated reviews (Cascade delete)
+    let reviews = getReviews();
+    reviews = reviews.filter(r => r.movieId !== id);
+    localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
 }
+
+
+// --- REVIEWS CRUD (Second Entity) ---
+
+function getReviews() {
+    const reviews = localStorage.getItem(REVIEWS_KEY);
+    return reviews ? JSON.parse(reviews) : [];
+}
+
+function getReviewsByMovieId(movieId) {
+    const reviews = getReviews();
+    return reviews.filter(r => r.movieId === movieId).sort((a, b) => b.timestamp - a.timestamp);
+}
+
+function saveReview(review) {
+    const reviews = getReviews();
+    if (review.id) {
+        const index = reviews.findIndex(r => r.id === review.id);
+        if (index !== -1) {
+            reviews[index] = review;
+        }
+    } else {
+        review.id = Date.now().toString() + '-' + Math.random().toString(36).substring(2, 9);
+        review.timestamp = Date.now();
+        reviews.push(review);
+    }
+    localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
+    return review;
+}
+
+function deleteReview(id) {
+    let reviews = getReviews();
+    reviews = reviews.filter(r => r.id !== id);
+    localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
+}
+
+
