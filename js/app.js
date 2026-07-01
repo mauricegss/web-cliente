@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const movieGrid = document.getElementById('movieGrid');
     const searchInput = document.getElementById('searchInput');
     const filterContainer = document.getElementById('filterContainer');
-    
+
     // Modal Elements
     const addMovieBtn = document.getElementById('addMovieBtn');
     const movieModal = document.getElementById('movieModal');
@@ -25,12 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Render Functions ---
     function renderMovies() {
         const movies = getMovies();
-        
+
         // Apply filters and search
         const filtered = movies.filter(movie => {
             const matchesFilter = currentFilter === 'all' || movie.status === currentFilter;
-            const matchesSearch = movie.title.toLowerCase().includes(searchQuery) || 
-                                  movie.genre.toLowerCase().includes(searchQuery);
+            const matchesSearch = movie.title.toLowerCase().includes(searchQuery) ||
+                movie.genre.toLowerCase().includes(searchQuery);
             return matchesFilter && matchesSearch;
         });
 
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filtered.forEach(movie => {
             const badgeClass = movie.status === 'watched' ? 'badge-watched' : 'badge-plan';
             const statusText = movie.status === 'watched' ? 'Assistido' : 'Quero Assistir';
-            
+
             // Fallback for broken images
             const imgHtml = `<img src="${movie.posterUrl}" alt="Pôster de ${movie.title}" class="movie-poster" onerror="this.src='https://via.placeholder.com/300x450?text=Sem+Poster'">`;
 
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.onclick = () => {
                 window.location.href = `details.html?id=${movie.id}`;
             };
-            
+
             card.innerHTML = `
                 ${imgHtml}
                 <div class="movie-overlay">
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event Listeners ---
-    
+
     // Search
     searchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value.toLowerCase();
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update active class
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
-            
+
             currentFilter = e.target.getAttribute('data-filter');
             renderMovies();
         }
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 movieGrid.insertBefore(lastChild, movieGrid.firstElementChild);
             }
         });
-        
+
         window.addEventListener('resize', updateCarouselButtons);
     }
 
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Form Submission
     movieForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        
+
         const movie = {
             id: document.getElementById('movieId').value || undefined,
             title: document.getElementById('title').value,
