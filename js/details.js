@@ -69,6 +69,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const reviews = getReviewsByMovieId(movieId);
         reviewContainer.innerHTML = '';
 
+        // If the movie hasn't been watched yet, show a prompt instead of the review
+        if (currentMovie.status === 'plan') {
+            reviewContainer.innerHTML = `
+                <div class="empty-state" role="alert" style="padding: 20px;">
+                    <i class="fa-solid fa-eye-slash" aria-hidden="true" style="font-size: 2.5rem;"></i>
+                    <h3 style="font-size: 1.2rem; margin-top: 10px;">Você ainda não assistiu</h3>
+                    <p style="font-size: 0.95rem; margin-bottom: 20px;">Assista ao filme para poder avaliá-lo!</p>
+                    <div style="display: flex; justify-content: center; width: 100%;">
+                        <button class="btn btn-primary" id="markWatchedBtn" style="width: auto; padding: 8px 16px;">
+                            <i class="fa-solid fa-check" aria-hidden="true"></i> Já Assisti!
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('markWatchedBtn').addEventListener('click', () => {
+                currentMovie.status = 'watched';
+                saveMovie(currentMovie);
+                renderMovieDetails();
+                renderReviews();
+            });
+            return;
+        }
+
         if (reviews.length === 0) {
             reviewContainer.innerHTML = `
                 <div class="empty-state" role="alert" style="padding: 20px;">
@@ -178,6 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveMovie(updatedMovie);
         closeMovieModal();
         renderMovieDetails();
+        renderReviews();
     });
 
     // --- Review Actions ---
