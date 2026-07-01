@@ -45,7 +45,7 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
 
 .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-.text-gradient { background: linear-gradient(to right, var(--primary-color), var(--secondary-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.text-gradient { background: linear-gradient(to right, var(--primary-color), var(--secondary-color)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .hidden { display: none !important; }
 
 /* Header */
